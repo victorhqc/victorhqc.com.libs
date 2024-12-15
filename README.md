@@ -13,7 +13,7 @@ Web Libraries for my personal Website
 ```sh
 deno run --allow-env --allow-read --allow-write --allow-run ./bundle.ts
 npx terser dist/photo-stack.js -o dist/photo-stack.min.js -c -m
-npx tailwindcss -i ./src/photos-stack.css -o ./dist/photos-stack.css
+npx tailwindcss -i ./src/photo-stack.css -o ./dist/photo-stack.css
 ```
 
 ## Photo Stack
