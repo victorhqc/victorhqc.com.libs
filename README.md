@@ -54,7 +54,9 @@ The `PhotoStack` class accepts an options object as the first argument. The opti
 const stack = new PhotoStack({
   stackSelector: '#photos-stack',
   slideSelector: '.photo-slide',
-  zAxisChange: 50;
-  yAxisChange: 100;
-})
+  zAxisChange: 50,
+  yAxisChange: 100,
+});
+
+await stack.init();
 ```
