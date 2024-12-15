@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["../globals.d.ts"],
+    "target": "ES2020",
+    "lib": ["dom", "ESNext"],
+    "strict": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["./**/*", "../globals.d.ts"],
+  "exclude": ["../node_modules"]
+}
