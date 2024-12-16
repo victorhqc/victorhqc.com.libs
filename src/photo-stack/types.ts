@@ -6,20 +6,20 @@
  * Index = length - 1 means in on top.
  */
 export interface PhotoPosition<El = HTMLElement> {
-  index: number;
-  last: number;
-  prevIndex: number;
-  // In this case, direction means direction of the stack. Which means the images will pile
-  // depending on which position they are:
-  // down: will place "below" in the screen, meaning the pictures below the one on top, will be placed below.
-  // up: will place "on top" in the screen, meaning the pictures below the one on top, will be placed above.
-  position: Position;
+  i: number;
+  prevI: number;
+  len: number;
+  pos: Position;
+  prevPos: Position;
   element: El;
 }
 
 export type Direction = "UP" | "DOWN";
 
-export type Position = "ON_TOP" | "ABOVE" | "BELOW";
+// T = On Top
+// A = Above
+// B = Below
+export type Position = "T" | "A" | "B";
 
 export type IterableElements<El> = ArrayLike<El> | Iterable<El>;
 // export type IterableElements = HTMLElement[] | NodeListOf<HTMLElement>;

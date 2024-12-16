@@ -3,9 +3,10 @@
 
 import { waitForAllToLoad } from "./wait-for-all-to-load.ts";
 import { calculateNextPosition } from "./calculate-next-position.ts";
+import { calculateYAxis } from "./calculate-y-axis.ts";
 import {
-  Direction,
   PhotoPosition,
+  Position,
   ScrambledData,
   ScrambledPosition,
 } from "./types.ts";
@@ -53,18 +54,25 @@ export class PhotoStack {
     container.classList.add("photos-stack");
 
     this.photos = document.querySelectorAll<HTMLElement>(this.slideSelector);
-    const last = this.photos.length - 1;
-    this.positions = Array.from(this.photos).map((el, index) => {
-      const prevIndex = index === last ? 0 : index + 1;
+    const len = this.photos.length - 1;
+    this.positions = Array.from(this.photos).map<PhotoPosition>(
+      (el, index) => {
+        const pos: Position = index === len ? "T" : "B";
+        const prevPos: Position = index === 0 ? "T" : "B";
+        const prevI = index === len ? 0 : index + 1;
 
-      return { index, prevIndex, last, element: el, position: "BELOW" };
-    });
+        return { i: index, prevI, len, element: el, pos, prevPos };
+      },
+    );
   }
 
   async init() {
     await waitForAllToLoad(this.photos);
 
-    const scrambledPhotos = this.calculateScramblePositions(this.photos);
+    const scrambledPhotos = this.calculateScramblePositions(
+      this.photos,
+      this.positions,
+    );
 
     for (const { photo, x, y, z, degrees } of scrambledPhotos) {
       photo.style.transform = `translate3d(0px, 0px, 0px) rotate(0deg)`;
@@ -115,18 +123,18 @@ export class PhotoStack {
               );
               this.positions = updatePositions(this.positions, newPosition);
 
-              return newPosition.index;
+              return newPosition.i;
             },
             (element) => {
               const position = findFromPositionOrThrow(this.positions, element);
               const { x, degrees } = findOriginalOrThrow(scrambled, element);
 
-              const y = this.yAxisChange * position.prevIndex;
-              const z = this.zAxisChange * position.prevIndex;
+              const y = this.yAxisChange * position.prevI;
+              const z = this.zAxisChange * position.prevI;
 
               element.style.transform =
                 `translate3d(${x}px, ${y}px, -${z}px) rotate(${degrees}deg)`;
-              element.style.zIndex = `${position.prevIndex}`;
+              element.style.zIndex = `${position.prevI}`;
               element.style.transitionDuration = "150ms";
             },
           );
@@ -142,18 +150,18 @@ export class PhotoStack {
               );
               this.positions = updatePositions(this.positions, newPosition);
 
-              return newPosition.index;
+              return newPosition.i;
             },
             (element) => {
               const position = findFromPositionOrThrow(this.positions, element);
               const { x, degrees } = findOriginalOrThrow(scrambled, element);
 
-              const y = this.yAxisChange * position.last;
-              const z = this.zAxisChange * position.last;
+              const y = this.yAxisChange * position.len;
+              const z = this.zAxisChange * position.len;
 
               element.style.transform =
                 `translate3d(${x}px, -${y}px, -${z}px) rotate(${degrees}deg)`;
-              element.style.zIndex = `${position.prevIndex}`;
+              element.style.zIndex = `${position.prevI}`;
               element.style.transitionDuration = "150ms";
             },
           );
@@ -163,7 +171,7 @@ export class PhotoStack {
       console.log("POSITIONS", this.positions);
 
       setTimeout(() => {
-        this.animateOnMovement(sortedPhotos, direction, scrambled);
+        this.animateOnMovement(sortedPhotos, scrambled);
       }, 50);
 
       isThrottled = true;
@@ -173,26 +181,19 @@ export class PhotoStack {
 
   private animateOnMovement(
     elements: HTMLElement[],
-    direction: Direction,
     scrambled: ScrambledData[],
   ) {
     elements.forEach((element) => {
       const position = findFromPositionOrThrow(this.positions, element);
-      const offset = position.last - position.index;
 
-      const newZ = this.calculateZAxis(element, offset, position.last);
-      const newY = this.calculateYAxis(
-        element,
-        offset,
-        position.last,
-        direction,
-      );
+      const newZ = this.calculateZAxis(position);
+      const newY = this.calculateYAxis(position);
       const { x, degrees } = findOriginalOrThrow(scrambled, element);
 
-      if (position.position === "ON_TOP") {
+      if (position.pos === "T") {
         setTimeout(() => {
           setTimeout(() => {
-            element.style.zIndex = `${position.index}`;
+            element.style.zIndex = `${position.i}`;
           }, 1);
 
           element.style.transform =
@@ -203,7 +204,7 @@ export class PhotoStack {
         element.style.transitionDuration = "300ms";
         element.style.transform =
           `translate3d(${x}px, ${newY}px, ${newZ}px) rotate(${degrees}deg)`;
-        element.style.zIndex = `${position.index}`;
+        element.style.zIndex = `${position.i}`;
       }
 
       setTimeout(() => (element.style.transitionDuration = "0ms"), 300);
@@ -242,59 +243,40 @@ export class PhotoStack {
     return elements;
   }
 
-  private calculateZAxis(el: HTMLElement, index: number, last: number) {
-    const { z } = getTransform(el);
-    const isMain = index === last;
+  private calculateZAxis(position: PhotoPosition) {
+    const { z } = getTransform(position.element);
+    const isOnTop = position.i === position.len;
 
-    if (isMain) {
+    if (isOnTop) {
       return 0;
     }
 
-    if (z === 0) {
-      return -this.zAxisChange * (last - index);
+    const inv = position.len - position.i;
+
+    if (position.prevPos === "T") {
+      return -this.zAxisChange * inv;
     }
 
     return z - this.zAxisChange;
   }
 
-  private calculateYAxis(
-    el: HTMLElement,
-    index: number,
-    last: number,
-    direction: Direction,
-  ): number {
-    const { y } = getTransform(el);
-    const isMain = index === last;
-
-    if (isMain) {
-      return 0;
-    }
-
-    if (direction === "DOWN") {
-      if (y === 0) {
-        return this.yAxisChange * (last - index);
-      }
-
-      return y + this.yAxisChange;
-    }
-
-    if (y === 0) {
-      return -this.yAxisChange * (last - index);
-    }
-
-    return y - this.yAxisChange;
+  private calculateYAxis(position: PhotoPosition): number {
+    return calculateYAxis(position, this.yAxisChange);
   }
 
   private calculateScramblePositions(
     elements: NodeListOf<HTMLElement>,
+    positions: PhotoPosition[],
   ): ScrambledData[] {
-    const last = elements.length - 1;
+    const len = elements.length - 1;
 
     const scrambled: ScrambledData[] = [];
     for (const [i, photo] of elements.entries()) {
-      const y = this.calculateYAxis(photo, i, last, "DOWN");
-      const z = this.calculateZAxis(photo, i, last);
-      const { degrees, x } = this.calculateScramblePosition(i, last);
+      const position = findFromPositionOrThrow(positions, photo);
+
+      const y = this.calculateYAxis(position);
+      const z = this.calculateZAxis(position);
+      const { degrees, x } = this.calculateScramblePosition(i, len);
       scrambled.push({ photo, x, y, z, degrees });
     }
 
@@ -305,17 +287,19 @@ export class PhotoStack {
     index: number,
     last: number,
   ): ScrambledPosition {
-    if (index === last) {
-      return { x: 0, degrees: 0 };
-    }
+    return { x: 0, degrees: 0 };
 
-    const degrees = calculateDegrees(index);
+    // if (index === last) {
+    //   return { x: 0, degrees: 0 };
+    // }
 
-    const minX = randomPositiveNegative(20);
-    const maxX = randomPositiveNegative(40);
-    const x = randomIntFromInterval(minX, maxX);
+    // const degrees = calculateDegrees(index);
 
-    return { degrees, x };
+    // const minX = randomPositiveNegative(20);
+    // const maxX = randomPositiveNegative(40);
+    // const x = randomIntFromInterval(minX, maxX);
+
+    // return { degrees, x };
   }
 }
 

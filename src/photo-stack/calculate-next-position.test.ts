@@ -14,9 +14,9 @@ An example can be described with the following case:
 The following is the initial position of the stack:
 ```
 [
-  { element: @, index: 2, prevIndex: null, position: "ON_TOP" },
-  { element: #, index: 1, prevIndex: null, position: "BELOW" },
-  { element: $, index: 0, prevIndex: null, position: "BELOW" },
+  { element: @, i: 2, prevI: null, position: "ON_TOP" },
+  { element: #, i: 1, prevI: null, position: "BELOW" },
+  { element: $, i: 0, prevI: null, position: "BELOW" },
 ]
 ````
 And can be expresseda as following:
@@ -46,23 +46,23 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "#", index: 1, last: 2, prevIndex: 2, position: "BELOW" },
-      { element: "$", index: 0, last: 2, prevIndex: 1, position: "BELOW" },
+      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "A" },
+      { element: "#", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
+      { element: "$", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
     ];
 
-    const positions = recalculate(initial, "DOWN");
+    const poss = recalculate(initial, "DOWN");
 
-    expect(positions).toEqual([
-      { element: "@", index: 1, last: 2, prevIndex: 2, position: "BELOW" },
-      { element: "#", index: 0, last: 2, prevIndex: 1, position: "BELOW" },
-      { element: "$", index: 2, last: 2, prevIndex: 0, position: "ON_TOP" },
+    expect(poss).toEqual([
+      { element: "@", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
+      { element: "#", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
+      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "B" },
     ]);
   });
 
   await t.step("Should move UP", () => {
     /*
-    When changing position, it serves to imagine it as a conveyor belt or the cards
+    When changing pos, it serves to imagine it as a conveyor belt or the cards
     tied with an imaginary rope, in this casee. The $ will fall "Above"
 
     CURRENT STATE
@@ -79,17 +79,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", index: 1, last: 2, prevIndex: 2, position: "BELOW" },
-      { element: "#", index: 0, last: 2, prevIndex: 1, position: "BELOW" },
-      { element: "$", index: 2, last: 2, prevIndex: 0, position: "ON_TOP" },
+      { element: "@", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
+      { element: "#", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
+      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "B" },
     ];
 
-    const positions = recalculate(initial, "UP");
+    const poss = recalculate(initial, "UP");
 
-    expect(positions).toEqual([
-      { element: "@", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "#", index: 1, last: 2, prevIndex: 0, position: "BELOW" },
-      { element: "$", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
+    expect(poss).toEqual([
+      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
+      { element: "#", i: 1, prevI: 0, len: 2, pos: "B", prevPos: "B" },
+      { element: "$", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
     ]);
   });
 
@@ -109,17 +109,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "#", index: 1, last: 2, prevIndex: 0, position: "BELOW" },
-      { element: "$", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
+      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
+      { element: "#", i: 1, prevI: 0, len: 2, pos: "B", prevPos: "B" },
+      { element: "$", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
     ];
 
-    const positions = recalculate(initial, "UP");
+    const poss = recalculate(initial, "UP");
 
-    expect(positions).toEqual([
-      { element: "@", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
-      { element: "#", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "$", index: 0, last: 2, prevIndex: 1, position: "ABOVE" },
+    expect(poss).toEqual([
+      { element: "@", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
+      { element: "$", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
     ]);
   });
 
@@ -140,17 +140,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
-      { element: "#", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "$", index: 0, last: 2, prevIndex: 1, position: "ABOVE" },
+      { element: "@", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
+      { element: "$", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
     ];
 
-    const positions = recalculate(initial, "UP");
+    const poss = recalculate(initial, "UP");
 
-    expect(positions).toEqual([
-      { element: "@", index: 0, last: 2, prevIndex: 1, position: "ABOVE" },
-      { element: "#", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
-      { element: "$", index: 2, last: 2, prevIndex: 0, position: "ON_TOP" },
+    expect(poss).toEqual([
+      { element: "@", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
+      { element: "#", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "A" },
     ]);
   });
 
@@ -169,17 +169,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", index: 0, last: 2, prevIndex: 1, position: "ABOVE" },
-      { element: "#", index: 1, last: 2, prevIndex: 2, position: "ABOVE" },
-      { element: "$", index: 2, last: 2, prevIndex: 0, position: "ON_TOP" },
+      { element: "@", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
+      { element: "#", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "A" },
     ];
 
-    const positions = recalculate(initial, "DOWN");
+    const poss = recalculate(initial, "DOWN");
 
-    expect(positions).toEqual([
-      { element: "@", index: 1, last: 2, prevIndex: 0, position: "ABOVE" },
-      { element: "#", index: 2, last: 2, prevIndex: 1, position: "ON_TOP" },
-      { element: "$", index: 1, last: 2, prevIndex: 2, position: "BELOW" },
+    expect(poss).toEqual([
+      { element: "@", i: 1, prevI: 0, len: 2, pos: "A", prevPos: "A" },
+      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "A" },
+      { element: "$", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
     ]);
   });
 

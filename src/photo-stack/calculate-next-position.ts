@@ -10,58 +10,58 @@ export function calculateNextPosition<El = HTMLElement>(
   const isMovingUp = direction === "UP";
 
   const current = findFromPositionOrThrow<El>(positions, element);
-  const isBelow = current.position === "BELOW";
-  const isAbove = current.position === "ABOVE";
+  const isBelow = current.pos === "B";
+  const isAbove = current.pos === "A";
 
-  const c = { ...current, prevIndex: current.index };
+  const c = { ...current, prevI: current.i, prevPos: current.pos };
 
-  if (isOnTop(current.index, current.last)) {
+  if (isOnTop(current.i, current.len)) {
     if (isMovingDown) {
-      return { ...c, index: current.index - 1, position: "BELOW" };
+      return { ...c, i: current.i - 1, pos: "B" };
     }
 
-    return { ...c, index: current.index - 1, position: "ABOVE" };
+    return { ...c, i: current.i - 1, pos: "A" };
   }
 
-  const onBottom = isOnBottom(current.index);
+  const onBottom = isOnBottom(current.i);
 
   if (onBottom && isBelow && isMovingDown) {
-    return { ...c, index: current.last, position: "ON_TOP" };
+    return { ...c, i: current.len, pos: "T" };
   }
 
   if (onBottom && isAbove && isMovingUp) {
-    return { ...c, index: current.last, position: "ON_TOP" };
+    return { ...c, i: current.len, pos: "T" };
   }
 
   if (isBelow) {
     if (isMovingUp) {
-      const nextIndex = current.index + 1;
+      const nextIndex = current.i + 1;
 
-      if (current.last === nextIndex) {
-        return { ...c, index: nextIndex, position: "ON_TOP" };
+      if (current.len === nextIndex) {
+        return { ...c, i: nextIndex, pos: "T" };
       }
 
-      return { ...c, index: nextIndex };
+      return { ...c, i: nextIndex };
     }
 
     if (isMovingDown) {
-      return { ...c, index: current.index - 1 };
+      return { ...c, i: current.i - 1 };
     }
   }
 
   if (isAbove) {
     if (isMovingUp) {
-      return { ...c, index: current.index - 1 };
+      return { ...c, i: current.i - 1 };
     }
 
     if (isMovingDown) {
-      const nextIndex = current.index + 1;
+      const nextIndex = current.i + 1;
 
-      if (current.last === nextIndex) {
-        return { ...c, index: nextIndex, position: "ON_TOP" };
+      if (current.len === nextIndex) {
+        return { ...c, i: nextIndex, pos: "T" };
       }
 
-      return { ...c, index: nextIndex };
+      return { ...c, i: nextIndex };
     }
   }
 
