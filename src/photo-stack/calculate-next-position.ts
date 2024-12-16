@@ -36,11 +36,12 @@ export function calculateNextPosition<El = HTMLElement>(
   if (isBelow) {
     if (isMovingUp) {
       const nextIndex = current.index + 1;
-      return {
-        ...c,
-        index: nextIndex,
-        position: nextIndex === current.last ? "ON_TOP" : "BELOW",
-      };
+
+      if (current.last === nextIndex) {
+        return { ...c, index: nextIndex, position: "ON_TOP" };
+      }
+
+      return { ...c, index: nextIndex };
     }
 
     if (isMovingDown) {
