@@ -3,10 +3,10 @@ import { denoPlugins } from "jsr:@luca/esbuild-deno-loader";
 
 await esbuild.build({
   plugins: [...denoPlugins()],
-  entryPoints: ["./src/photo-stack.ts"],
+  entryPoints: ["./src/photo-stack.lib.ts"],
   outfile: "./dist/photo-stack.js",
   bundle: true,
-  format: "esm",
+  format: "iife",
 });
 
 esbuild.stop();
