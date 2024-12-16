@@ -60,10 +60,6 @@ export function calculateNextPosition<El = HTMLElement>(
         return { ...c, index: nextIndex, position: "ON_TOP" };
       }
 
-      if (current.prevIndex === current.last) {
-        return { ...c, index: nextIndex, position: "BELOW" };
-      }
-
       return { ...c, index: nextIndex };
     }
   }
