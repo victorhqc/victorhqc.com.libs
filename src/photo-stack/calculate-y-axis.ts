@@ -13,16 +13,8 @@ export function calculateYAxis<El = HTMLElement>(
   const inv = position.len - position.i;
 
   if (position.pos === "B") {
-    if (position.prevPos === "T") {
-      return yAxisChange * inv;
-    }
-
-    return 0 + yAxisChange;
+    return inv * yAxisChange;
   }
 
-  if (position.prevPos === "T") {
-    return -yAxisChange * inv;
-  }
-
-  return 0 - yAxisChange;
+  return inv * -yAxisChange;
 }

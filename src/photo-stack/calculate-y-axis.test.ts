@@ -39,7 +39,7 @@ Deno.test("calculateYAxis", async (t) => {
       prevPos: "B",
     };
 
-    expect(calculateYAxis(position, 10)).toEqual(10);
+    expect(calculateYAxis(position, 10)).toEqual(20);
   });
 
   await t.step("Should return -10 when is Above on Index 1", () => {
@@ -65,6 +65,6 @@ Deno.test("calculateYAxis", async (t) => {
       prevPos: "A",
     };
 
-    expect(calculateYAxis(position, 10)).toEqual(-10);
+    expect(calculateYAxis(position, 10)).toEqual(-20);
   });
 });
