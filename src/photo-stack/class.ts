@@ -144,76 +144,25 @@ export class PhotoStack {
             element.style.transitionDuration = "0ms";
             element.style.transform =
               `translate3d(${x}px, ${resetY}px, ${resetZ}px) rotate(${degrees}deg)`;
-            element.style.zIndex = `${resetI}`;
+            element.style.zIndex = `${0}`;
 
             setTimeout(
               () => this.animate(element, current.i, x, y, z, degrees),
-              0,
+              10,
             );
           } else {
             setTimeout(
               () => this.animate(element, current.i, x, y, z, degrees),
-              0,
+              10,
             );
           }
-
-          // if (position.pos === "T") return;
-
-          // const { x, degrees } = findOriginalOrThrow(scrambled, element);
-
-          // const y = this.calculateYAxis(prevPosition);
-          // const z = this.calculateZAxis(prevPosition);
-
-          // element.style.transform =
-          //   `translate3d(${x}px, ${y}px, ${z}px) rotate(${degrees}deg)`;
-          // element.style.zIndex = `${position.i}`;
-          // element.style.transitionDuration = "150ms";
-          //
         },
       );
 
-      console.log("POSITIONS", this.positions);
-
-      // setTimeout(() => {
-      //   this.animateOnMovement(sortedPhotos, scrambled);
-      // }, 50);
-
       isThrottled = true;
-      setTimeout(() => (isThrottled = false), 800);
+      setTimeout(() => (isThrottled = false), 600);
     });
   }
-
-  // private animateOnMovement_(
-  //   elements: HTMLElement[],
-  //   scrambled: ScrambledData[],
-  // ) {
-  //   elements.forEach((element) => {
-  //     const position = findFromPositionOrThrow(this.positions, element);
-
-  //     const newZ = this.calculateZAxis(position);
-  //     const newY = this.calculateYAxis(position);
-  //     const { x, degrees } = findOriginalOrThrow(scrambled, element);
-
-  //     if (position.pos === "T") {
-  //       setTimeout(() => {
-  //         setTimeout(() => {
-  //           element.style.zIndex = `${position.i}`;
-  //         }, 1);
-
-  //         element.style.transform =
-  //           `translate3d(${x}px, 0px, 0px) rotate(${degrees}deg)`;
-  //         element.style.transformOrigin = "";
-  //       }, 50);
-  //     } else {
-  //       element.style.transitionDuration = "300ms";
-  //       element.style.transform =
-  //         `translate3d(${x}px, ${newY}px, ${newZ}px) rotate(${degrees}deg)`;
-  //       element.style.zIndex = `${position.i}`;
-  //     }
-
-  //     setTimeout(() => (element.style.transitionDuration = "0ms"), 300);
-  //   });
-  // }
 
   private animateOnMovement(
     elms: NodeListOf<HTMLElement>,
@@ -248,11 +197,15 @@ export class PhotoStack {
       return { current, prev, element };
     });
 
+    // Reset the animation when the photo that will be on top, is coming from the very bottom of the pile.
     const shouldReset = positions.some(({ current, prev }) =>
       current.pos === "T" && prev.i === 0
     );
 
-    positions.forEach((d) => applyStylesCb(d, shouldReset));
+    // Top should always move first.
+    const sorted = positions.sort((a, b) => b.current.i - a.current.i);
+
+    sorted.forEach((d) => applyStylesCb(d, shouldReset));
 
     this.positions = positions.map(({ current, prev }) => ({ current, prev }));
   }
@@ -284,20 +237,7 @@ export class PhotoStack {
     }
 
     const inv = position.len - i;
-
-    // if (position.prevPos === "T") {
-    // }
     return inv * -this.zAxisChange;
-
-    // return z - this.zAxisChange;
-    /**
-    const inv = position.len - i;
-
-    if (position.pos === "B") {
-      return inv * yAxisChange;
-    }
-
-    return inv * -yAxisChange; */
   }
 
   private calculateYAxis(position: PhotoPosition): number {
@@ -329,19 +269,17 @@ export class PhotoStack {
     index: number,
     last: number,
   ): ScrambledPosition {
-    return { x: 0, degrees: 0 };
+    if (index === last) {
+      return { x: 0, degrees: 0 };
+    }
 
-    // if (index === last) {
-    //   return { x: 0, degrees: 0 };
-    // }
+    const degrees = calculateDegrees(index);
 
-    // const degrees = calculateDegrees(index);
+    const minX = randomPositiveNegative(20);
+    const maxX = randomPositiveNegative(40);
+    const x = randomIntFromInterval(minX, maxX);
 
-    // const minX = randomPositiveNegative(20);
-    // const maxX = randomPositiveNegative(40);
-    // const x = randomIntFromInterval(minX, maxX);
-
-    // return { degrees, x };
+    return { degrees, x };
   }
 }
 
