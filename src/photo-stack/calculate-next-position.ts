@@ -13,7 +13,7 @@ export function calculateNextPosition<El = HTMLElement>(
   const isBelow = current.pos === "B";
   const isAbove = current.pos === "A";
 
-  const c = { ...current, prevI: current.i, prevPos: current.pos };
+  const c = { ...current };
 
   if (isOnTop(current.i, current.len)) {
     if (isMovingDown) {

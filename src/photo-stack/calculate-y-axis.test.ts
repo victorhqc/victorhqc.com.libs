@@ -7,10 +7,8 @@ Deno.test("calculateYAxis", async (t) => {
     const position: PhotoPosition<string> = {
       element: "@",
       i: 2,
-      prevI: 1,
       len: 2,
       pos: "T",
-      prevPos: "A",
     };
 
     expect(calculateYAxis(position, 10)).toEqual(0);
@@ -20,10 +18,8 @@ Deno.test("calculateYAxis", async (t) => {
     const position: PhotoPosition<string> = {
       element: "@",
       i: 1,
-      prevI: 2,
       len: 2,
       pos: "B",
-      prevPos: "T",
     };
 
     expect(calculateYAxis(position, 10)).toEqual(10);
@@ -33,10 +29,8 @@ Deno.test("calculateYAxis", async (t) => {
     const position: PhotoPosition<string> = {
       element: "@",
       i: 0,
-      prevI: 1,
       len: 2,
       pos: "B",
-      prevPos: "B",
     };
 
     expect(calculateYAxis(position, 10)).toEqual(20);
@@ -46,10 +40,8 @@ Deno.test("calculateYAxis", async (t) => {
     const position: PhotoPosition<string> = {
       element: "@",
       i: 1,
-      prevI: 2,
       len: 2,
       pos: "A",
-      prevPos: "T",
     };
 
     expect(calculateYAxis(position, 10)).toEqual(-10);
@@ -59,10 +51,8 @@ Deno.test("calculateYAxis", async (t) => {
     const position: PhotoPosition<string> = {
       element: "@",
       i: 0,
-      prevI: 1,
       len: 2,
       pos: "A",
-      prevPos: "A",
     };
 
     expect(calculateYAxis(position, 10)).toEqual(-20);

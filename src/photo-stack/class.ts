@@ -5,6 +5,7 @@ import { waitForAllToLoad } from "./wait-for-all-to-load.ts";
 import { calculateNextPosition } from "./calculate-next-position.ts";
 import { calculateYAxis } from "./calculate-y-axis.ts";
 import {
+  Direction,
   PhotoPosition,
   Position,
   ScrambledData,
@@ -15,10 +16,6 @@ import {
   findOriginalOrThrow,
 } from "./find-elements.ts";
 
-const REGEX_TRANSFORM =
-  /(translate3d\(([-+]?[0-9]+px,?\s?){3}\))\s?(rotate\([-+]?[0-9]+deg\))/gi;
-const REGEX_TRANSLATE3D =
-  /translate3d\(((-?[0-9]+)px,?\s?)(((\+|-)?[0-9]+)px,?\s?)(((\+|-)?[0-9]+)px,?\s?)\)/gi;
 const Z_AXIS_CHANGE = 10;
 const Y_AXIS_CHANGE = 20;
 
@@ -28,7 +25,7 @@ export class PhotoStack {
   private slideSelector: string;
   private zAxisChange: number;
   private yAxisChange: number;
-  private positions: PhotoPosition[];
+  private positions: { current: PhotoPosition; prev: PhotoPosition }[];
 
   constructor({
     stackSelector = "#photos-stack",
@@ -55,13 +52,18 @@ export class PhotoStack {
 
     this.photos = document.querySelectorAll<HTMLElement>(this.slideSelector);
     const len = this.photos.length - 1;
-    this.positions = Array.from(this.photos).map<PhotoPosition>(
-      (el, index) => {
+    this.positions = Array.from(this.photos).map<
+      { current: PhotoPosition; prev: PhotoPosition }
+    >(
+      (element, index) => {
         const pos: Position = index === len ? "T" : "B";
         const prevPos: Position = index === 0 ? "T" : "B";
         const prevI = index === len ? 0 : index + 1;
 
-        return { i: index, prevI, len, element: el, pos, prevPos };
+        return {
+          current: { i: index, len, pos, element },
+          prev: { i: prevI, len, pos: prevPos, element },
+        };
       },
     );
   }
@@ -103,161 +105,199 @@ export class PhotoStack {
       const photos: NodeListOf<HTMLElement> = document.querySelectorAll(
         photosSelector,
       );
-      const direction = event.deltaY > 0 ? "UP" : "DOWN";
+      const direction: Direction = event.deltaY > 0 ? "UP" : "DOWN";
 
-      let sortedPhotos;
-      /*
-      When an animation starts, the `beforeRenderCb`, the position of the element that will be placed on top of
-      the stack, needs to be resetted or the animation will look janky and out of place. This callback ensures
-      that the position is in the appropriate place BEFORE the element is rendered back in the DOM.
-      */
-      switch (direction) {
-        case "UP":
-          sortedPhotos = this.sortPhotos(
-            photos,
-            (element) => {
-              const newPosition = calculateNextPosition(
-                this.positions,
-                element,
-                "UP",
-              );
-              this.positions = updatePositions(this.positions, newPosition);
+      this.animateOnMovement(
+        photos,
+        direction,
+        ({ element, current, prev }, shouldReset) => {
+          const z = this.calculateZAxis(current);
+          const y = this.calculateYAxis(current);
+          const { x, degrees } = findOriginalOrThrow(scrambled, element);
 
-              return newPosition.i;
-            },
-            (element) => {
-              const position = findFromPositionOrThrow(this.positions, element);
-              const { x, degrees } = findOriginalOrThrow(scrambled, element);
+          if (!shouldReset) {
+            this.animate(element, current.i, x, y, z, degrees);
 
-              const y = this.yAxisChange * position.prevI;
-              const z = this.zAxisChange * position.prevI;
+            return;
+          }
 
-              element.style.transform =
-                `translate3d(${x}px, ${y}px, -${z}px) rotate(${degrees}deg)`;
-              element.style.zIndex = `${position.prevI}`;
-              element.style.transitionDuration = "150ms";
-            },
-          );
-          break;
-        case "DOWN":
-          sortedPhotos = this.sortPhotos(
-            photos,
-            (element) => {
-              const newPosition = calculateNextPosition(
-                this.positions,
-                element,
-                "DOWN",
-              );
-              this.positions = updatePositions(this.positions, newPosition);
+          if (current.pos === "T") {
+            const resetI = current.len - 1;
 
-              return newPosition.i;
-            },
-            (element) => {
-              const position = findFromPositionOrThrow(this.positions, element);
-              const { x, degrees } = findOriginalOrThrow(scrambled, element);
+            const resetYPosition: PhotoPosition = {
+              i: resetI,
+              pos: prev.pos === "B" ? "A" : "B", // Flip the position
+              len: current.len,
+              element: current.element,
+            };
 
-              const y = this.yAxisChange * position.len;
-              const z = this.zAxisChange * position.len;
+            const resetZPosition: PhotoPosition = {
+              i: 0,
+              pos: prev.pos === "B" ? "A" : "B", // Flip the position
+              len: current.len,
+              element: current.element,
+            };
 
-              element.style.transform =
-                `translate3d(${x}px, -${y}px, -${z}px) rotate(${degrees}deg)`;
-              element.style.zIndex = `${position.prevI}`;
-              element.style.transitionDuration = "150ms";
-            },
-          );
-          break;
-      }
+            const resetY = this.calculateYAxis(resetYPosition);
+            const resetZ = this.calculateZAxis(resetZPosition);
+
+            element.style.transitionDuration = "0ms";
+            element.style.transform =
+              `translate3d(${x}px, ${resetY}px, ${resetZ}px) rotate(${degrees}deg)`;
+            element.style.zIndex = `${resetI}`;
+
+            setTimeout(
+              () => this.animate(element, current.i, x, y, z, degrees),
+              0,
+            );
+          } else {
+            setTimeout(
+              () => this.animate(element, current.i, x, y, z, degrees),
+              0,
+            );
+          }
+
+          // if (position.pos === "T") return;
+
+          // const { x, degrees } = findOriginalOrThrow(scrambled, element);
+
+          // const y = this.calculateYAxis(prevPosition);
+          // const z = this.calculateZAxis(prevPosition);
+
+          // element.style.transform =
+          //   `translate3d(${x}px, ${y}px, ${z}px) rotate(${degrees}deg)`;
+          // element.style.zIndex = `${position.i}`;
+          // element.style.transitionDuration = "150ms";
+          //
+        },
+      );
 
       console.log("POSITIONS", this.positions);
 
-      setTimeout(() => {
-        this.animateOnMovement(sortedPhotos, scrambled);
-      }, 50);
+      // setTimeout(() => {
+      //   this.animateOnMovement(sortedPhotos, scrambled);
+      // }, 50);
 
       isThrottled = true;
       setTimeout(() => (isThrottled = false), 800);
     });
   }
 
+  // private animateOnMovement_(
+  //   elements: HTMLElement[],
+  //   scrambled: ScrambledData[],
+  // ) {
+  //   elements.forEach((element) => {
+  //     const position = findFromPositionOrThrow(this.positions, element);
+
+  //     const newZ = this.calculateZAxis(position);
+  //     const newY = this.calculateYAxis(position);
+  //     const { x, degrees } = findOriginalOrThrow(scrambled, element);
+
+  //     if (position.pos === "T") {
+  //       setTimeout(() => {
+  //         setTimeout(() => {
+  //           element.style.zIndex = `${position.i}`;
+  //         }, 1);
+
+  //         element.style.transform =
+  //           `translate3d(${x}px, 0px, 0px) rotate(${degrees}deg)`;
+  //         element.style.transformOrigin = "";
+  //       }, 50);
+  //     } else {
+  //       element.style.transitionDuration = "300ms";
+  //       element.style.transform =
+  //         `translate3d(${x}px, ${newY}px, ${newZ}px) rotate(${degrees}deg)`;
+  //       element.style.zIndex = `${position.i}`;
+  //     }
+
+  //     setTimeout(() => (element.style.transitionDuration = "0ms"), 300);
+  //   });
+  // }
+
   private animateOnMovement(
-    elements: HTMLElement[],
-    scrambled: ScrambledData[],
-  ) {
-    elements.forEach((element) => {
-      const position = findFromPositionOrThrow(this.positions, element);
-
-      const newZ = this.calculateZAxis(position);
-      const newY = this.calculateYAxis(position);
-      const { x, degrees } = findOriginalOrThrow(scrambled, element);
-
-      if (position.pos === "T") {
-        setTimeout(() => {
-          setTimeout(() => {
-            element.style.zIndex = `${position.i}`;
-          }, 1);
-
-          element.style.transform =
-            `translate3d(${x}px, 0px, 0px) rotate(${degrees}deg)`;
-          element.style.transformOrigin = "";
-        }, 50);
-      } else {
-        element.style.transitionDuration = "300ms";
-        element.style.transform =
-          `translate3d(${x}px, ${newY}px, ${newZ}px) rotate(${degrees}deg)`;
-        element.style.zIndex = `${position.i}`;
-      }
-
-      setTimeout(() => (element.style.transitionDuration = "0ms"), 300);
-    });
-  }
-
-  private sortPhotos(
     elms: NodeListOf<HTMLElement>,
-    sortCb: (element: HTMLElement) => number,
-    beforeRenderCb: (element: HTMLElement) => void,
-  ): HTMLElement[] {
+    direction: Direction,
+    applyStylesCb: (
+      data: {
+        element: HTMLElement;
+        current: PhotoPosition;
+        prev: PhotoPosition;
+      },
+      shouldReset: boolean,
+    ) => void,
+  ) {
     if (elms.length === 0) return Array.from(elms);
 
-    const firstElement = elms[0];
-    if (!firstElement) throw new Error("Could not find first element");
+    const currentPositions = this.positions.map(({ current }) => current);
 
-    const parent = firstElement.parentNode;
-    if (!parent) return Array.from(elms);
+    const elements = Array.from(elms);
+    const positions = elements.map<
+      { element: HTMLElement; current: PhotoPosition; prev: PhotoPosition }
+    >((element) => {
+      const prev = findFromPositionOrThrow(
+        currentPositions,
+        element,
+      );
+      const current = calculateNextPosition(
+        currentPositions,
+        element,
+        direction,
+      );
 
-    const elements = Array.from(elms)
-      .map((element) => {
-        const newIndex = sortCb(element);
-
-        return { element, newIndex };
-      })
-      .sort((a, b) => a.newIndex - b.newIndex)
-      .map(({ element }) => element);
-
-    elements.forEach((element) => {
-      element.remove();
-      beforeRenderCb(element);
-
-      parent.appendChild(element);
+      return { current, prev, element };
     });
 
-    return elements;
+    const shouldReset = positions.some(({ current, prev }) =>
+      current.pos === "T" && prev.i === 0
+    );
+
+    positions.forEach((d) => applyStylesCb(d, shouldReset));
+
+    this.positions = positions.map(({ current, prev }) => ({ current, prev }));
   }
 
-  private calculateZAxis(position: PhotoPosition) {
-    const { z } = getTransform(position.element);
-    const isOnTop = position.i === position.len;
+  private animate(
+    element: HTMLElement,
+    i: number,
+    x: number,
+    y: number,
+    z: number,
+    degrees: number,
+    ms = 300,
+  ) {
+    element.style.transitionDuration = `${ms}ms`;
+    element.style.transform =
+      `translate3d(${x}px, ${y}px, ${z}px) rotate(${degrees}deg)`;
+    element.style.zIndex = `${i}`;
+
+    setTimeout(() => (element.style.transitionDuration = "0ms"), ms);
+  }
+
+  private calculateZAxis(position: PhotoPosition): number {
+    const i = position.i;
+
+    const isOnTop = i === position.len;
 
     if (isOnTop) {
       return 0;
     }
 
-    const inv = position.len - position.i;
+    const inv = position.len - i;
 
-    if (position.prevPos === "T") {
-      return -this.zAxisChange * inv;
+    // if (position.prevPos === "T") {
+    // }
+    return inv * -this.zAxisChange;
+
+    // return z - this.zAxisChange;
+    /**
+    const inv = position.len - i;
+
+    if (position.pos === "B") {
+      return inv * yAxisChange;
     }
 
-    return z - this.zAxisChange;
+    return inv * -yAxisChange; */
   }
 
   private calculateYAxis(position: PhotoPosition): number {
@@ -266,13 +306,15 @@ export class PhotoStack {
 
   private calculateScramblePositions(
     elements: NodeListOf<HTMLElement>,
-    positions: PhotoPosition[],
+    positions: { current: PhotoPosition; prev: PhotoPosition }[],
   ): ScrambledData[] {
     const len = elements.length - 1;
 
+    const currentPositions = positions.map(({ current }) => current);
+
     const scrambled: ScrambledData[] = [];
     for (const [i, photo] of elements.entries()) {
-      const position = findFromPositionOrThrow(positions, photo);
+      const position = findFromPositionOrThrow(currentPositions, photo);
 
       const y = this.calculateYAxis(position);
       const z = this.calculateZAxis(position);
@@ -309,46 +351,6 @@ function calculateDegrees(index: number): number {
   return randomIntFromInterval(minDeg, maxDeg);
 }
 
-function getTransform(element: HTMLElement): TransformData {
-  const originalTransform = element.style.transform;
-
-  const matches = [...originalTransform.matchAll(REGEX_TRANSFORM)];
-  if (matches.length === 0) {
-    return { x: 0, y: 0, z: 0, rotate: `rotate(0deg)` };
-  }
-
-  if (!matches[0]) {
-    throw new Error("Could not find transform");
-  }
-
-  const translate = matches[0][1];
-  const rotate = matches[0][3] ?? `rotate(0deg)`;
-
-  if (!translate) {
-    throw new Error("Could not find translate");
-  }
-
-  const translateMatches = [...translate.matchAll(REGEX_TRANSLATE3D)];
-  const match = translateMatches[0];
-  if (!match) {
-    throw new Error("Invalid Transform");
-  }
-
-  const rawX = match[2];
-  const rawY = match[4];
-  const rawZ = match[7];
-
-  if (!rawX || !rawY || !rawZ) {
-    throw new Error("Invalid Transform");
-  }
-
-  const x = parseInt(rawX);
-  const y = parseInt(rawY);
-  const z = parseInt(rawZ);
-
-  return { x, y, z, rotate };
-}
-
 function randomIntFromInterval(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1) + min);
 }
@@ -356,29 +358,4 @@ function randomIntFromInterval(min: number, max: number): number {
 function randomPositiveNegative(number: number): number {
   const sign = Math.random() < 0.5 ? -1 : 1;
   return number * sign;
-}
-
-function updatePositions(
-  positions: PhotoPosition[],
-  newPosition: PhotoPosition,
-) {
-  const index = positions.findIndex(({ element }) =>
-    element === newPosition.element
-  );
-  if (index < 0) {
-    throw new Error("Could not find position");
-  }
-
-  return [
-    ...positions.slice(0, index),
-    newPosition,
-    ...positions.slice(index + 1),
-  ];
-}
-
-interface TransformData {
-  x: number;
-  y: number;
-  z: number;
-  rotate: string;
 }

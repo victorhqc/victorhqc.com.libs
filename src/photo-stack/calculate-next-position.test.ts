@@ -14,9 +14,9 @@ An example can be described with the following case:
 The following is the initial position of the stack:
 ```
 [
-  { element: @, i: 2, prevI: null, position: "ON_TOP" },
-  { element: #, i: 1, prevI: null, position: "BELOW" },
-  { element: $, i: 0, prevI: null, position: "BELOW" },
+  { element: @, i: 2, position: "ON_TOP" },
+  { element: #, i: 1, position: "BELOW" },
+  { element: $, i: 0, position: "BELOW" },
 ]
 ````
 And can be expresseda as following:
@@ -46,17 +46,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "A" },
-      { element: "#", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
-      { element: "$", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
+      { element: "@", i: 2, len: 2, pos: "T" },
+      { element: "#", i: 1, len: 2, pos: "B" },
+      { element: "$", i: 0, len: 2, pos: "B" },
     ];
 
     const poss = recalculate(initial, "DOWN");
 
     expect(poss).toEqual([
-      { element: "@", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
-      { element: "#", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
-      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "B" },
+      { element: "@", i: 1, len: 2, pos: "B" },
+      { element: "#", i: 0, len: 2, pos: "B" },
+      { element: "$", i: 2, len: 2, pos: "T" },
     ]);
   });
 
@@ -79,17 +79,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
-      { element: "#", i: 0, prevI: 1, len: 2, pos: "B", prevPos: "B" },
-      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "B" },
+      { element: "@", i: 1, len: 2, pos: "B" },
+      { element: "#", i: 0, len: 2, pos: "B" },
+      { element: "$", i: 2, len: 2, pos: "T" },
     ];
 
     const poss = recalculate(initial, "UP");
 
     expect(poss).toEqual([
-      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
-      { element: "#", i: 1, prevI: 0, len: 2, pos: "B", prevPos: "B" },
-      { element: "$", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "@", i: 2, len: 2, pos: "T" },
+      { element: "#", i: 1, len: 2, pos: "B" },
+      { element: "$", i: 1, len: 2, pos: "A" },
     ]);
   });
 
@@ -109,17 +109,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
-      { element: "#", i: 1, prevI: 0, len: 2, pos: "B", prevPos: "B" },
-      { element: "$", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
+      { element: "@", i: 2, len: 2, pos: "T" },
+      { element: "#", i: 1, len: 2, pos: "B" },
+      { element: "$", i: 1, len: 2, pos: "A" },
     ];
 
     const poss = recalculate(initial, "UP");
 
     expect(poss).toEqual([
-      { element: "@", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
-      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
-      { element: "$", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
+      { element: "@", i: 1, len: 2, pos: "A" },
+      { element: "#", i: 2, len: 2, pos: "T" },
+      { element: "$", i: 0, len: 2, pos: "A" },
     ]);
   });
 
@@ -140,17 +140,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
-      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "B" },
-      { element: "$", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
+      { element: "@", i: 1, len: 2, pos: "A" },
+      { element: "#", i: 2, len: 2, pos: "T" },
+      { element: "$", i: 0, len: 2, pos: "A" },
     ];
 
     const poss = recalculate(initial, "UP");
 
     expect(poss).toEqual([
-      { element: "@", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
-      { element: "#", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
-      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "A" },
+      { element: "@", i: 0, len: 2, pos: "A" },
+      { element: "#", i: 1, len: 2, pos: "A" },
+      { element: "$", i: 2, len: 2, pos: "T" },
     ]);
   });
 
@@ -169,17 +169,17 @@ Deno.test("calculateNestPosition", async (t) => {
     */
 
     const initial: PhotoPosition<string>[] = [
-      { element: "@", i: 0, prevI: 1, len: 2, pos: "A", prevPos: "A" },
-      { element: "#", i: 1, prevI: 2, len: 2, pos: "A", prevPos: "T" },
-      { element: "$", i: 2, prevI: 0, len: 2, pos: "T", prevPos: "A" },
+      { element: "@", i: 0, len: 2, pos: "A" },
+      { element: "#", i: 1, len: 2, pos: "A" },
+      { element: "$", i: 2, len: 2, pos: "T" },
     ];
 
     const poss = recalculate(initial, "DOWN");
 
     expect(poss).toEqual([
-      { element: "@", i: 1, prevI: 0, len: 2, pos: "A", prevPos: "A" },
-      { element: "#", i: 2, prevI: 1, len: 2, pos: "T", prevPos: "A" },
-      { element: "$", i: 1, prevI: 2, len: 2, pos: "B", prevPos: "T" },
+      { element: "@", i: 1, len: 2, pos: "A" },
+      { element: "#", i: 2, len: 2, pos: "T" },
+      { element: "$", i: 1, len: 2, pos: "B" },
     ]);
   });
 

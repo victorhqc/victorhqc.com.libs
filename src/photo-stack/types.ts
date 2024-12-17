@@ -7,10 +7,8 @@
  */
 export interface PhotoPosition<El = HTMLElement> {
   i: number;
-  prevI: number;
   len: number;
   pos: Position;
-  prevPos: Position;
   element: El;
 }
 
