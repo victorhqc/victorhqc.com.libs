@@ -17,6 +17,7 @@ import {
 } from "./find-elements.ts";
 
 const Z_AXIS_CHANGE = 10;
+const X_AXIS_CHANGE = 20;
 const Y_AXIS_CHANGE = 20;
 
 export class PhotoStack {
@@ -24,6 +25,7 @@ export class PhotoStack {
   private stackSelector: string;
   private slideSelector: string;
   private zAxisChange: number;
+  private xAxisChange: number;
   private yAxisChange: number;
   private positions: { current: PhotoPosition; prev: PhotoPosition }[];
 
@@ -31,17 +33,19 @@ export class PhotoStack {
     stackSelector = "#photos-stack",
     slideSelector = ".photo-slide",
     zAxisChange = Z_AXIS_CHANGE,
+    xAxisChange = X_AXIS_CHANGE,
     yAxisChange = Y_AXIS_CHANGE,
   }: {
     stackSelector: string;
     slideSelector: string;
     zAxisChange: number;
+    xAxisChange: number;
     yAxisChange: number;
   }) {
     this.stackSelector = stackSelector;
     this.slideSelector = slideSelector;
     this.zAxisChange = zAxisChange;
-    this.yAxisChange = yAxisChange;
+    this.xAxisChange = xAxisChange, this.yAxisChange = yAxisChange;
 
     const container = document.querySelector<HTMLElement>(this.stackSelector);
     if (!container) {
@@ -273,10 +277,11 @@ export class PhotoStack {
       return { x: 0, degrees: 0 };
     }
 
-    const degrees = calculateDegrees(index);
+    const degrees = calculateDegrees(index > 2 ? 2 : index);
 
-    const minX = randomPositiveNegative(20);
-    const maxX = randomPositiveNegative(40);
+    const minX = randomPositiveNegative(this.xAxisChange);
+    const maxX = randomPositiveNegative(this.xAxisChange * 2);
+    console.log({ minX, maxX });
     const x = randomIntFromInterval(minX, maxX);
 
     return { degrees, x };
