@@ -1,4 +1,4 @@
-import { decode } from "npm:blurhash@2.0.5";
+import { decode } from "npm:blurhash";
 
 export function drawBlurhash(
   canvas: HTMLCanvasElement,
