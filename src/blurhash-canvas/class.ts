@@ -41,13 +41,17 @@ export class BlurhashCanvas {
 
     const { decodeW, decodeH } = computeDecodeDimensions(width, height, this.opts.resolution);
 
-    // Skip if this exact blurhash has already been rendered.
+    // Skip if hash and dimensions are unchanged since the last render.
+    const renderKey = `${hash}:${decodeW}x${decodeH}`;
     const existing = el.querySelector<HTMLCanvasElement>("canvas[data-blurhash-rendered]");
-    if (existing && existing.getAttribute("data-blurhash-rendered") === hash) return;
+    if (existing && existing.getAttribute("data-blurhash-rendered") === renderKey) return;
 
+    const isNew = !existing;
     const canvas = existing ?? document.createElement("canvas");
-    canvas.className = el.dataset.blurhashClass || "blurhash-canvas";
-    canvas.setAttribute("data-blurhash-rendered", hash);
+    if (isNew) {
+      canvas.className = el.dataset.blurhashClass || "blurhash-canvas";
+    }
+    canvas.setAttribute("data-blurhash-rendered", renderKey);
     drawBlurhash(canvas, hash, decodeW, decodeH);
 
     if (!existing) {
