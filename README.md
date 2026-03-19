@@ -51,7 +51,8 @@ await stack.init();
 ### Options
 
 The `PhotoStack` class accepts an options object as the first argument. The options
-object currently only accepts a `selector` property, which is the selector of the photos to be stacked.
+object currently supports the following properties: `stackSelector`, `slideSelector`,
+`zAxisChange`, `xAxisChange`, `yAxisChange`, and `withKeyboardBindings`.
 
 ```js
 const stack = new PhotoStack({
