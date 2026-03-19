@@ -9,4 +9,12 @@ await esbuild.build({
   format: "iife",
 });
 
+await esbuild.build({
+  plugins: [...denoPlugins()],
+  entryPoints: ["./src/blurhash-canvas.lib.ts"],
+  outfile: "./dist/blurhash-canvas.js",
+  bundle: true,
+  format: "iife",
+});
+
 esbuild.stop();
