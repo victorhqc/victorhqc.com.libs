@@ -21,8 +21,9 @@ export class BlurhashCanvas {
   }
 
   /** Scan the DOM (or a subtree) and render every blurhash placeholder found. */
-  init(root: ParentNode = document): void {
-    const elements = root.querySelectorAll<HTMLElement>(this.opts.selector);
+  init(root: ParentNode | null | undefined = document): void {
+    const effectiveRoot: ParentNode = root || document;
+    const elements = effectiveRoot.querySelectorAll<HTMLElement>(this.opts.selector);
     elements.forEach((el) => this.render(el));
   }
 

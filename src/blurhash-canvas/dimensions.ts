@@ -10,8 +10,14 @@ export function resolveDimensions(
   offsetHeight: number,
   resolution: number,
 ): { width: number; height: number } {
-  const width = parseInt(dataWidth || "0", 10) || offsetWidth || resolution;
-  const height = parseInt(dataHeight || "0", 10) || offsetHeight || resolution;
+  const parsed = (v: string | undefined) => {
+    const n = parseInt(v || "0", 10);
+    return n > 0 ? n : 0;
+  };
+  const pos = (...vals: number[]) => vals.find((v) => v > 0) ?? 1;
+
+  const width = pos(parsed(dataWidth), offsetWidth, resolution);
+  const height = pos(parsed(dataHeight), offsetHeight, resolution);
   return { width, height };
 }
 
@@ -27,9 +33,22 @@ export function computeDecodeDimensions(
   resolution: number,
 ): { decodeW: number; decodeH: number } {
   const res = Math.max(1, resolution);
-  const ratio = width / height;
-  return {
-    decodeW: res,
-    decodeH: Math.max(1, Math.round(res / ratio)),
-  };
+  const w = Number.isFinite(width) && width > 0 ? width : 1;
+  const h = Number.isFinite(height) && height > 0 ? height : 1;
+  const ratio = w / h;
+
+  let decodeW: number;
+  let decodeH: number;
+
+  if (ratio >= 1) {
+    // Landscape or square: fix width to resolution, scale height down.
+    decodeW = res;
+    decodeH = Math.max(1, Math.round(res / ratio));
+  } else {
+    // Portrait: fix height to resolution, scale width down.
+    decodeH = res;
+    decodeW = Math.max(1, Math.round(res * ratio));
+  }
+
+  return { decodeW, decodeH };
 }
