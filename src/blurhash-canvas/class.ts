@@ -1,4 +1,5 @@
 import { drawBlurhash } from "./decode.ts";
+import { computeDecodeDimensions, resolveDimensions } from "./dimensions.ts";
 
 interface BlurhashCanvasOptions {
   /** CSS selector for elements with a `data-blurhash` attribute. */
@@ -29,18 +30,27 @@ export class BlurhashCanvas {
     const hash = el.dataset.blurhash;
     if (!hash) return;
 
-    const width = parseInt(el.dataset.blurhashWidth || "0", 10) || el.offsetWidth || this.opts.resolution;
-    const height = parseInt(el.dataset.blurhashHeight || "0", 10) || el.offsetHeight || this.opts.resolution;
+    const { width, height } = resolveDimensions(
+      el.dataset.blurhashWidth,
+      el.dataset.blurhashHeight,
+      el.offsetWidth,
+      el.offsetHeight,
+      this.opts.resolution,
+    );
 
-    // Keep the decode resolution small – the browser stretches it via CSS.
-    const ratio = width / height;
-    const decodeW = this.opts.resolution;
-    const decodeH = Math.round(this.opts.resolution / ratio);
+    const { decodeW, decodeH } = computeDecodeDimensions(width, height, this.opts.resolution);
 
-    const canvas = document.createElement("canvas");
+    // Skip if this exact blurhash has already been rendered.
+    const existing = el.querySelector<HTMLCanvasElement>("canvas[data-blurhash-rendered]");
+    if (existing && existing.getAttribute("data-blurhash-rendered") === hash) return;
+
+    const canvas = existing ?? document.createElement("canvas");
     canvas.className = el.dataset.blurhashClass || "blurhash-canvas";
+    canvas.setAttribute("data-blurhash-rendered", hash);
     drawBlurhash(canvas, hash, decodeW, decodeH);
 
-    el.insertBefore(canvas, el.firstChild);
+    if (!existing) {
+      el.insertBefore(canvas, el.firstChild);
+    }
   }
 }

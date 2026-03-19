@@ -10,9 +10,9 @@ export function drawBlurhash(
   canvas.width = width;
   canvas.height = height;
 
-  const pixels = decode(hash, width, height, punch);
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  const pixels = decode(hash, width, height, punch);
 
   const imageData = ctx.createImageData(width, height);
   imageData.data.set(pixels);
